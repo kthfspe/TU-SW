@@ -1,0 +1,32 @@
+// Rf settings for CC1101
+//
+// Rf settings for CC1101
+//
+halRfWriteReg(IOCFG0,0x06);    //GDO0 Output Pin Configuration
+halRfWriteReg(FSCTRL1,0x0C);   //Frequency Synthesizer Control
+halRfWriteReg(FREQ2,0x21);     //Frequency Control Word, High Byte
+halRfWriteReg(FREQ1,0x71);     //Frequency Control Word, Middle Byte
+halRfWriteReg(FREQ0,0x7A);     //Frequency Control Word, Low Byte
+halRfWriteReg(MDMCFG4,0x1D);   //Modem Configuration
+halRfWriteReg(MDMCFG3,0x3B);   //Modem Configuration
+halRfWriteReg(MDMCFG2,0x13);   //Modem Configuration
+halRfWriteReg(MDMCFG1,0x21);   //Modem Configuration
+halRfWriteReg(DEVIATN,0x60);   //Modem Deviation Setting
+halRfWriteReg(MCSM0,0x18);     //Main Radio Control State Machine Configuration
+halRfWriteReg(FOCCFG,0x1D);    //Frequency Offset Compensation Configuration
+halRfWriteReg(BSCFG,0x1C);     //Bit Synchronization Configuration
+halRfWriteReg(AGCCTRL2,0xC7);  //AGC Control
+halRfWriteReg(AGCCTRL1,0x00);  //AGC Control
+halRfWriteReg(AGCCTRL0,0xB0);  //AGC Control
+halRfWriteReg(WORCTRL,0xFB);   //Wake On Radio Control
+halRfWriteReg(FREND1,0xB6);    //Front End RX Configuration
+halRfWriteReg(FSCAL3,0xEA);    //Frequency Synthesizer Calibration
+halRfWriteReg(FSCAL2,0x2A);    //Frequency Synthesizer Calibration
+halRfWriteReg(FSCAL1,0x00);    //Frequency Synthesizer Calibration
+halRfWriteReg(FSCAL0,0x1F);    //Frequency Synthesizer Calibration
+halRfWriteReg(TEST0,0x09);     //Various Test Settings
+halRfWriteReg(VERSION,0x14);   //Chip ID
+halRfWriteReg(LQI,0x5C);       //Demodulator Estimate for Link Quality
+halRfWriteReg(RSSI,0x80);      //Received Signal Strength Indication
+halRfWriteReg(MARCSTATE,0x01); //Main Radio Control State Machine State
+halRfWriteReg(VCO_VC_DAC,0x94);//Current Setting from PLL Calibration Module
