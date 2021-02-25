@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,9 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-// Test
-const uint8_t stateread = 0x35 | 0xC0;
-const uint8_t Stateread2 = 0xF5;
+
+
 
 // FIFO REGISTERS
 #define TX_FIFO        0x3F
@@ -56,6 +56,8 @@ const uint8_t Stateread2 = 0xF5;
 #define STX                      0x35
 #define SFTX					 0x3B
 #define SRX               		 0x34
+#define SFRX					 0x3A
+#define SIDLE 					 0x36
 
 // STATUS REGISTERS
 #define PARTNUM        0x30        //PARTNUM Part number for CC1101
@@ -135,9 +137,10 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 int state = 1;
+int prev_state = 0;
 int gone_rx = 1;
 char SPI_BUFFER[8];
-char MSG[100];
+char MSG[1000];
 int *pos = MSG;
 int RX_BUFFER[66];
 
@@ -315,7 +318,7 @@ int main(void)
 
   //SETUP SETTINGS (Imported from SMART RF Studios)
   halRfWriteReg(IOCFG2,0x06);    //GDO2 Output Pin Configuration
-  halRfWriteReg(IOCFG0,0x40);    //GDO0 Output Pin Configuration
+  halRfWriteReg(IOCFG0,0x06);    //GDO0 Output Pin Configuration
   halRfWriteReg(FIFOTHR,0x4C);   //RX FIFO and TX FIFO Thresholds
   halRfWriteReg(FSCTRL1,0x08);   //Frequency Synthesizer Control
   halRfWriteReg(FREQ2,0x10);     //Frequency Control Word, High Byte
@@ -338,11 +341,15 @@ int main(void)
   halRfWriteReg(FSCAL1,0x00);    //Frequency Synthesizer Calibration
   halRfWriteReg(FSCAL0,0x1F);    //Frequency Synthesizer Calibration
   halRfWriteReg(AGCTEST,0x3B);   //AGC Test
+  halRfWriteReg(TEST2,0x81);     //Various Test Settings
+  halRfWriteReg(TEST1,0x35);     //Various Test Settings
+  halRfWriteReg(TEST0,0x09);     //Various Test Settings
+
+  command_strobe1(SIDLE);
+  command_strobe1(SFRX);
 
 
-//  halRfWriteReg(TEST2,0x81);     //Various Test Settings
-//  halRfWriteReg(TEST1,0x35);     //Various Test Settings
-//  halRfWriteReg(TEST0,0x09);     //Various Test Settings
+
 
   /* USER CODE END 2 */
  
@@ -353,9 +360,9 @@ int main(void)
   while (1)
   {
 
-	  if (state == 1){
-
-		  readReg(MARCSTATE, STATUS_REGISTER);
+	  if (state == 1 && prev_state != 1 ){
+		 command_strobe1(SIDLE);
+		 readReg(MARCSTATE, STATUS_REGISTER);
 
 		 sprintf(MSG, "MCU_state: 1    Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
 		 HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
@@ -369,27 +376,11 @@ int main(void)
 
 
 		  gone_rx = 0;
-		  if (bytes_in_RXFIFO != 0 ){
-			  sprintf(MSG, "Data in RXFIFO:\r\n");
-			  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-			  memset(MSG, 0, sizeof MSG);
-			  readRegBurst(RX_BUFFER, RX_FIF0, bytes_in_RXFIFO);
-			  *pos = MSG;
-
-			  for (i = 0; i < bytes_in_RXFIFO; ++i)
-				  {
-				      pos += sprintf(pos, " ");
-				      pos += sprintf(pos, "%i", (unsigned int)RX_BUFFER[i]);
-				  }
-			  pos += sprintf(pos, "\r\n");
-			  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-			  memset(MSG, 0, sizeof MSG);
-			  pos = MSG;
-		  }
+		  prev_state = 1;
 
 
 	  }
-	  if (state == 2){
+	  if (state == 2 && prev_state != 2){
 
 		  if (gone_rx == 0){
 		  command_strobe1(SRX);
@@ -413,13 +404,13 @@ int main(void)
 		  memset(MSG, 0, sizeof MSG);
 
 
-
+		  prev_state = 2;
 
 
 
 
 	  }
-	  HAL_Delay(1000);
+
 
     /* USER CODE END WHILE */
 
@@ -573,6 +564,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : GDO0_Pin */
+  GPIO_InitStruct.Pin = GDO0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GDO0_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pins : SPI1_CS_Pin LED_Pin */
   GPIO_InitStruct.Pin = SPI1_CS_Pin|LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -588,6 +585,9 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
+	int bytes_in_RXFIFO;
+	int i;
+	int str;
 
 	if (GPIO_Pin == B1_Pin) {
 		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
@@ -599,33 +599,53 @@ void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
 		}
 	}
 
-//	if (GPIO_Pin == GDO0_Pin){
-//		sprintf(MSG, "Message on its way\r\n");
-//		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//		memset(MSG, 0, sizeof MSG);
-//
-//		while(HAL_GPIO_ReadPin(GDO0_GPIO_Port,GDO0_Pin)>0){
-//
-//			}
-//
-//		readReg(RXBYTES, STATUS_REGISTER);
-//	    sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-//	    HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//	    memset(MSG, 0, sizeof MSG);
-//
-//		readRegBurst(RX_BUFFER, RX_FIF0, sizeof(RX_BUFFER));
-//
-//
-//		sprintf(MSG, "Data: ");
-//		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//		memset(MSG, 0, sizeof MSG);
-//		HAL_UART_Transmit(&huart2, RX_BUFFER, sizeof(RX_BUFFER), 100);
-//
-//		sprintf(MSG, " \r\n");
-//		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//		memset(MSG, 0, sizeof MSG);
-//
-//	}
+	if (GPIO_Pin == GDO0_Pin){
+
+		while(HAL_GPIO_ReadPin(GDO0_GPIO_Port,GDO0_Pin)>0){
+						i += 1;
+					}
+		readReg(RXBYTES, STATUS_REGISTER);
+		bytes_in_RXFIFO = SPI_BUFFER[0];
+
+		if (bytes_in_RXFIFO != 0){
+			clock_t begin = clock();
+//			sprintf(MSG, "Data of %i bytes recieved:\r\n",(unsigned int)bytes_in_RXFIFO);
+//			HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+//			memset(MSG, 0, sizeof MSG);
+
+			readReg(RXBYTES, STATUS_REGISTER);
+			bytes_in_RXFIFO = SPI_BUFFER[0];
+
+			readRegBurst(RX_BUFFER, RX_FIF0, bytes_in_RXFIFO);
+
+			*pos = MSG;
+			for (i = 0; i < bytes_in_RXFIFO; ++i)
+			  {
+				  pos += sprintf(pos, " %i", (unsigned int)RX_BUFFER[i]);
+			  }
+			pos += sprintf(pos, "\r\n");
+
+			HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+			memset(MSG, 0, sizeof MSG);
+			pos = MSG;
+
+			if (RX_BUFFER[bytes_in_RXFIFO-1] & 0x80){
+				sprintf(MSG, "CRC OK!\r\n");
+				HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+				memset(MSG, 0, sizeof MSG);
+			}
+			else{
+				sprintf(MSG, "CRC NOT OK!\r\n");
+				HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+				memset(MSG, 0, sizeof MSG);
+			}
+
+			command_strobe1(SRX);
+			clock_t end = clock();
+			double time_spent = (double)(end - begin);
+			__NOP();
+		}
+	}
 
 
 
