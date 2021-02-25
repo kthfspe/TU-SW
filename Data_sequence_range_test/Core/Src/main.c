@@ -40,22 +40,14 @@ const uint8_t Stateread2 = 0xF5;
 
 // FIFO REGISTERS
 #define TX_FIFO        0x3F
-#define RX_FIF0 	   0x3F
 
 //REGISTER TYPES
 #define STATUS_REGISTER  0xC0
 #define CONFIG_REGISTER  0x80
 
-//HEADERS (for read and write commands)
-// No special header for write single since its header is zero
-#define WRITE_BURST              0x40
-#define READ_SINGLE              0x80
-#define READ_BURST               0xC0
-
 // COMMAND STROBES
 #define STX                      0x35
 #define SFTX					 0x3B
-#define SRX               		 0x34
 
 // STATUS REGISTERS
 #define PARTNUM        0x30        //PARTNUM Part number for CC1101
@@ -135,11 +127,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 int state = 1;
-int gone_rx = 1;
 char SPI_BUFFER[8];
-char MSG[100];
-int *pos = MSG;
-int RX_BUFFER[66];
 
 /* USER CODE END PV */
 
@@ -169,7 +157,7 @@ void CS_Deselect()  {
 // Waits until MISO goes low
 void wait_Miso() {
 	while(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_6)>0){
-
+		__NOP();
 	}
 }
 
@@ -252,21 +240,6 @@ void readReg(uint8_t regAddr, uint8_t regType) {
 
 }
 
-void readRegBurst(int buffer[], uint8_t regAddr, uint8_t len)
-{
-  uint8_t addr;
-  int i;
-  addr = regAddr | READ_BURST;
-  CS_Select();                      								   // Select CS
-  wait_Miso();                          							   // Wait until MISO goes low
-  HAL_SPI_Transmit(&hspi1, (uint8_t*)&addr, 1, 100);                   // Send register address
-  for (i = 0; i < len; ++i)
-  	  {
-	  HAL_SPI_Receive(&hspi1, (uint8_t*)&buffer[i], 1, 100);   		   	   // Read data and store in buffer
-  	  }
-  CS_Deselect();                   									   // Deselect CS
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -276,8 +249,13 @@ void readRegBurst(int buffer[], uint8_t regAddr, uint8_t len)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
- int bytes_in_RXFIFO;
- int i;
+	char MSG[40];
+	int datalen = 4;   // Set length of payload. Note that the first length byte is not inluded in this.
+						// However the 2 sequence bytes are included. Max value is 63.
+	char data[datalen];
+	int RX_BUFFER[20];
+	uint16_t sequence_number = 1;
+
   /* USER CODE END 1 */
   
 
@@ -307,16 +285,10 @@ int main(void)
   HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
   memset(MSG, 0, sizeof (MSG));
 
-  readReg(MARCSTATE, STATUS_REGISTER);
-
-  sprintf(MSG,"Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-  memset(MSG, 0, sizeof MSG);
-
   //SETUP SETTINGS (Imported from SMART RF Studios)
-  halRfWriteReg(IOCFG2,0x06);    //GDO2 Output Pin Configuration
-  halRfWriteReg(IOCFG0,0x40);    //GDO0 Output Pin Configuration
-  halRfWriteReg(FIFOTHR,0x4C);   //RX FIFO and TX FIFO Thresholds
+  halRfWriteReg(IOCFG0,0x06);    //GDO0 Output Pin Configuration
+  halRfWriteReg(FIFOTHR,0x47);   //RX FIFO and TX FIFO Thresholds
+  halRfWriteReg(PKTCTRL0,0x45);  //Packet Automation Control
   halRfWriteReg(FSCTRL1,0x08);   //Frequency Synthesizer Control
   halRfWriteReg(FREQ2,0x10);     //Frequency Control Word, High Byte
   halRfWriteReg(FREQ1,0xEA);     //Frequency Control Word, Middle Byte
@@ -337,12 +309,24 @@ int main(void)
   halRfWriteReg(FSCAL2,0x2A);    //Frequency Synthesizer Calibration
   halRfWriteReg(FSCAL1,0x00);    //Frequency Synthesizer Calibration
   halRfWriteReg(FSCAL0,0x1F);    //Frequency Synthesizer Calibration
-  halRfWriteReg(AGCTEST,0x3B);   //AGC Test
+  halRfWriteReg(TEST2,0x81);     //Various Test Settings
+  halRfWriteReg(TEST1,0x35);     //Various Test Settings
+  halRfWriteReg(TEST0,0x09);     //Various Test Settings
+  halRfWriteReg(VERSION,0x14);   //Chip ID
+  halRfWriteReg(LQI,0x5C);       //Demodulator Estimate for Link Quality
+  halRfWriteReg(RSSI,0x80);      //Received Signal Strength Indication
+  halRfWriteReg(MARCSTATE,0x01); //Main Radio Control State Machine State
+  halRfWriteReg(VCO_VC_DAC,0x94);//Current Setting from PLL Calibration Module
 
+  // POWER SETTING (has to be done manually without register export)
+  halRfWriteReg(0x3E,0xC0); // PATABLE 0 to 10dbm
 
-//  halRfWriteReg(TEST2,0x81);     //Various Test Settings
-//  halRfWriteReg(TEST1,0x35);     //Various Test Settings
-//  halRfWriteReg(TEST0,0x09);     //Various Test Settings
+// Create data array
+  int i;
+  for (i = 0; i < sizeof(data); ++i)
+    {
+      data[i] = 2 * i;
+    }
 
   /* USER CODE END 2 */
  
@@ -355,51 +339,16 @@ int main(void)
 
 	  if (state == 1){
 
-		  readReg(MARCSTATE, STATUS_REGISTER);
-
-		 sprintf(MSG, "MCU_state: 1    Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-		 HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		 memset(MSG, 0, sizeof MSG);
-
-		 readReg(RXBYTES, STATUS_REGISTER);
-		 bytes_in_RXFIFO = SPI_BUFFER[0];
-		 sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)bytes_in_RXFIFO);
-		 HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		 memset(MSG, 0, sizeof MSG);
+		  sprintf(MSG, "State1\r\n");
+		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+		  memset(MSG, 0, sizeof MSG);
+		  sequence_number = 1;
 
 
-		  gone_rx = 0;
-		  if (bytes_in_RXFIFO != 0 ){
-			  sprintf(MSG, "Data in RXFIFO:\r\n");
-			  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-			  memset(MSG, 0, sizeof MSG);
-			  readRegBurst(RX_BUFFER, RX_FIF0, bytes_in_RXFIFO);
-			  *pos = MSG;
-
-			  for (i = 0; i < bytes_in_RXFIFO; ++i)
-				  {
-				      pos += sprintf(pos, " ");
-				      pos += sprintf(pos, "%i", (unsigned int)RX_BUFFER[i]);
-				  }
-			  pos += sprintf(pos, "\r\n");
-			  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-			  memset(MSG, 0, sizeof MSG);
-			  pos = MSG;
-		  }
 
 
 	  }
 	  if (state == 2){
-
-		  if (gone_rx == 0){
-		  command_strobe1(SRX);
-		  sprintf(MSG, "Gone to RX\r\n");
-		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		  memset(MSG, 0, sizeof MSG);
-
-		  gone_rx = 1;
-
-		  }
 
 		  readReg(MARCSTATE, STATUS_REGISTER);
 
@@ -407,19 +356,37 @@ int main(void)
 		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
 		  memset(MSG, 0, sizeof MSG);
 
-		  readReg(RXBYTES, STATUS_REGISTER);
-		  sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
+		  readReg(TXBYTES, STATUS_REGISTER);
+		  sprintf(MSG, "Amount of bytes in FIFOTX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
 		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
 		  memset(MSG, 0, sizeof MSG);
 
 
+		  send_data_sequence(data, datalen,sequence_number);
+
+		  sequence_number += 1;
+		  if (sequence_number > 255){
+			  sequence_number = 0;
+		  }
 
 
+		  readReg(TXBYTES, STATUS_REGISTER);
+		  sprintf(MSG, "Amoun of bytes in FIFOTX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
+		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+		  memset(MSG, 0, sizeof MSG);
+
+		  command_strobe1(STX);
+		  sprintf(MSG, "Gone to TX\r\n");
+		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+
+		  memset(MSG, 0, sizeof MSG);
+
+		  //command_strobe1(SFTX); VAR FÖRSIKTIG!!!!!!!
 
 
 
 	  }
-	  HAL_Delay(1000);
+	  HAL_Delay(50);
 
     /* USER CODE END WHILE */
 
@@ -597,35 +564,11 @@ void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
 		else {
 			state = 1;
 		}
-	}
 
-//	if (GPIO_Pin == GDO0_Pin){
-//		sprintf(MSG, "Message on its way\r\n");
-//		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//		memset(MSG, 0, sizeof MSG);
-//
-//		while(HAL_GPIO_ReadPin(GDO0_GPIO_Port,GDO0_Pin)>0){
-//
-//			}
-//
-//		readReg(RXBYTES, STATUS_REGISTER);
-//	    sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-//	    HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//	    memset(MSG, 0, sizeof MSG);
-//
-//		readRegBurst(RX_BUFFER, RX_FIF0, sizeof(RX_BUFFER));
-//
-//
-//		sprintf(MSG, "Data: ");
-//		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//		memset(MSG, 0, sizeof MSG);
-//		HAL_UART_Transmit(&huart2, RX_BUFFER, sizeof(RX_BUFFER), 100);
-//
-//		sprintf(MSG, " \r\n");
-//		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//		memset(MSG, 0, sizeof MSG);
-//
-//	}
+	}
+	else{
+		__NOP();
+	}
 
 
 

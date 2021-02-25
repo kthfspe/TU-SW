@@ -1,0 +1,16 @@
+main.c:147:6:CS_Select	8	static
+main.c:153:6:CS_Deselect	8	static
+main.c:158:6:wait_Miso	8	static,ignoring_inline_asm
+main.c:165:6:writeReg	16	static
+main.c:175:6:halRfWriteReg	16	static
+main.c:181:6:command_strobe1	16	static
+main.c:190:6:send_data	32	static
+main.c:207:6:send_data_sequence	40	static
+main.c:232:6:readReg	32	static
+main.c:249:5:main	192	dynamic
+main.c:402:6:SystemClock_Config	112	static
+main.c:446:13:MX_SPI1_Init	8	static
+main.c:486:13:MX_USART2_UART_Init	8	static
+main.c:521:13:MX_GPIO_Init	56	static
+main.c:557:7:HAL_GPIO_EXTI_Callback	16	static,ignoring_inline_asm
+main.c:582:6:Error_Handler	8	static
