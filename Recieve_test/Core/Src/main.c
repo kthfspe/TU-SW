@@ -133,6 +133,8 @@
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim16;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -143,6 +145,8 @@ char SPI_BUFFER[8];
 char MSG[1000];
 int *pos = MSG;
 int RX_BUFFER[66];
+uint16_t timer_val;
+int recieved_packets = 0;
 
 /* USER CODE END PV */
 
@@ -151,6 +155,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -304,6 +309,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
   CS_Deselect();
   sprintf(MSG, "Serial Monitor Engaged\r\n");
@@ -315,8 +321,10 @@ int main(void)
   sprintf(MSG,"Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
   HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
   memset(MSG, 0, sizeof MSG);
+  // Start timer
+  HAL_TIM_Base_Start(&htim16);
 
-  //SETUP SETTINGS (Imported from SMART RF Studios)
+  //RF-chip SETUP SETTINGS (Imported from SMART RF Studios)
   halRfWriteReg(IOCFG2,0x06);    //GDO2 Output Pin Configuration
   halRfWriteReg(IOCFG0,0x06);    //GDO0 Output Pin Configuration
   halRfWriteReg(FIFOTHR,0x4C);   //RX FIFO and TX FIFO Thresholds
@@ -348,9 +356,10 @@ int main(void)
   command_strobe1(SIDLE);
   command_strobe1(SFRX);
 
-
-
-
+  //Manually setting the inerrupts so they come after RF-chip SETUP SETTINGS
+  // The GDO0 pin glitches the uC otherwise. These settings need to be commented out in MX_GPIO_Init()
+    HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
   /* USER CODE END 2 */
  
  
@@ -361,23 +370,37 @@ int main(void)
   {
 
 	  if (state == 1 && prev_state != 1 ){
-		 command_strobe1(SIDLE);
-		 readReg(MARCSTATE, STATUS_REGISTER);
-
-		 sprintf(MSG, "MCU_state: 1    Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-		 HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		 memset(MSG, 0, sizeof MSG);
-
-		 readReg(RXBYTES, STATUS_REGISTER);
-		 bytes_in_RXFIFO = SPI_BUFFER[0];
-		 sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)bytes_in_RXFIFO);
-		 HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		 memset(MSG, 0, sizeof MSG);
+		command_strobe1(SIDLE);
+		readReg(MARCSTATE, STATUS_REGISTER);
 
 
-		  gone_rx = 0;
-		  prev_state = 1;
 
+		sprintf(MSG, "MCU_state: 1    Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
+		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+		memset(MSG, 0, sizeof MSG);
+
+		readReg(RXBYTES, STATUS_REGISTER);
+		bytes_in_RXFIFO = SPI_BUFFER[0];
+		sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)bytes_in_RXFIFO);
+		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+		memset(MSG, 0, sizeof MSG);
+
+
+		sprintf(MSG, "Recieved packets (CRC ok!): %i\r\n", (unsigned int)recieved_packets);
+		timer_val = __HAL_TIM_GET_COUNTER(&htim16);
+		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+		timer_val = __HAL_TIM_GET_COUNTER(&htim16) - timer_val;
+		memset(MSG, 0, sizeof MSG);
+
+
+		timer_val = __HAL_TIM_GET_COUNTER(&htim16) - timer_val;
+		sprintf(MSG, "Counter value: %u Time: %u us \r\n", timer_val, timer_val*4);
+		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+		memset(MSG, 0, sizeof MSG);
+
+		gone_rx = 0;
+		prev_state = 1;
+		recieved_packets = 0;
 
 	  }
 	  if (state == 2 && prev_state != 2){
@@ -503,6 +526,38 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM16 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM16_Init(void)
+{
+
+  /* USER CODE BEGIN TIM16_Init 0 */
+
+  /* USER CODE END TIM16_Init 0 */
+
+  /* USER CODE BEGIN TIM16_Init 1 */
+
+  /* USER CODE END TIM16_Init 1 */
+  htim16.Instance = TIM16;
+  htim16.Init.Prescaler = 192-1;
+  htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim16.Init.Period = 65536-1;
+  htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim16.Init.RepetitionCounter = 0;
+  htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM16_Init 2 */
+
+  /* USER CODE END TIM16_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -578,8 +633,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+  //HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+  //HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
 }
 
@@ -600,7 +655,7 @@ void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
 	}
 
 	if (GPIO_Pin == GDO0_Pin){
-
+		//timer_val = __HAL_TIM_GET_COUNTER(&htim16);
 		while(HAL_GPIO_ReadPin(GDO0_GPIO_Port,GDO0_Pin)>0){
 						i += 1;
 					}
@@ -608,31 +663,29 @@ void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
 		bytes_in_RXFIFO = SPI_BUFFER[0];
 
 		if (bytes_in_RXFIFO != 0){
-			clock_t begin = clock();
-//			sprintf(MSG, "Data of %i bytes recieved:\r\n",(unsigned int)bytes_in_RXFIFO);
-//			HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-//			memset(MSG, 0, sizeof MSG);
+
 
 			readReg(RXBYTES, STATUS_REGISTER);
 			bytes_in_RXFIFO = SPI_BUFFER[0];
 
 			readRegBurst(RX_BUFFER, RX_FIF0, bytes_in_RXFIFO);
 
-			*pos = MSG;
-			for (i = 0; i < bytes_in_RXFIFO; ++i)
-			  {
-				  pos += sprintf(pos, " %i", (unsigned int)RX_BUFFER[i]);
-			  }
-			pos += sprintf(pos, "\r\n");
-
-			HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-			memset(MSG, 0, sizeof MSG);
-			pos = MSG;
+//			*pos = MSG;
+//			for (i = 0; i < bytes_in_RXFIFO; ++i)
+//			  {
+//				  pos += sprintf(pos, " %i", (unsigned int)RX_BUFFER[i]);
+//			  }
+//			pos += sprintf(pos, "\r\n");
+//
+//			HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+//			memset(MSG, 0, sizeof MSG);
+//			pos = MSG;
 
 			if (RX_BUFFER[bytes_in_RXFIFO-1] & 0x80){
-				sprintf(MSG, "CRC OK!\r\n");
-				HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-				memset(MSG, 0, sizeof MSG);
+				recieved_packets += 1;
+//				sprintf(MSG, "CRC OK!\r\n");
+//				HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+//				memset(MSG, 0, sizeof MSG);
 			}
 			else{
 				sprintf(MSG, "CRC NOT OK!\r\n");
@@ -641,9 +694,13 @@ void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
 			}
 
 			command_strobe1(SRX);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin);
-			__NOP();
+
+
+
+//			timer_val = __HAL_TIM_GET_COUNTER(&htim16) - timer_val;
+//			sprintf(MSG, "Counter value: %u Time: %u us \r\n", timer_val, timer_val*4);
+//			HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+//			memset(MSG, 0, sizeof MSG);
 		}
 	}
 
