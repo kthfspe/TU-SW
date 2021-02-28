@@ -97,10 +97,6 @@
             <Value>0xc0</Value>
         </Register>
         <Register>
-            <Name>PKTCTRL0</Name>
-            <Value>0x05</Value>
-        </Register>
-        <Register>
             <Name>RSSI</Name>
             <Value>0x80</Value>
         </Register>
@@ -136,7 +132,7 @@
         <Property name="m_cmbUserMode" role="46">1</Property>
         <Property name="m_easyModeSettings" role="33">-1</Property>
         <Property name="m_typicalSettings" role="33">-1</Property>
-        <Property name="m_testFuncPanel" role="37">3</Property>
+        <Property name="m_testFuncPanel" role="37">2</Property>
     </dcpanel>
     <rfparameters>
         <Property name="m_cmbFrontends" role="46">0</Property>
