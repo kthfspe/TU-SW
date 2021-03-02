@@ -127,6 +127,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 int state = 1;
+int prev_state = 0;
 char SPI_BUFFER[8];
 
 /* USER CODE END PV */
@@ -249,7 +250,7 @@ void readReg(uint8_t regAddr, uint8_t regType) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	char MSG[40];
+	char MSG[100];
 	int datalen = 4;   // Set length of payload. Note that the first length byte is not inluded in this.
 						// However the 2 sequence bytes are included. Max value is 63.
 	char data[datalen];
@@ -338,20 +339,25 @@ int main(void)
   {
 
 	  if (state == 1){
-
-		  sprintf(MSG, "State1\r\n");
+		  if (prev_state != 1){
+		  readReg(MARCSTATE, STATUS_REGISTER);
+		  sprintf(MSG, "MCU_state: 1    Tranceiver_state: %i 	Sent packets: %i\r\n",
+				  (unsigned int)SPI_BUFFER[0],(unsigned int)sequence_number);
 		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
 		  memset(MSG, 0, sizeof MSG);
 		  sequence_number = 1;
+		  prev_state = 1;
 
-
+	  	  }
 
 
 	  }
 	  if (state == 2){
 
-		  readReg(MARCSTATE, STATUS_REGISTER);
 
+		  if (prev_state != 2){
+
+		  readReg(MARCSTATE, STATUS_REGISTER);
 		  sprintf(MSG, "MCU_state: 2    Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
 		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
 		  memset(MSG, 0, sizeof MSG);
@@ -360,33 +366,37 @@ int main(void)
 		  sprintf(MSG, "Amount of bytes in FIFOTX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
 		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
 		  memset(MSG, 0, sizeof MSG);
+		  prev_state = 2;
+		  }
 
+		  readReg(TXBYTES, STATUS_REGISTER);
+		  if (SPI_BUFFER[0] == 0){
 
 		  send_data_sequence(data, datalen,sequence_number);
 
 		  sequence_number += 1;
-		  if (sequence_number > 255){
-			  sequence_number = 0;
+		  if (sequence_number > 10000){
+			  sequence_number = 1;
+		  }
 		  }
 
-
-		  readReg(TXBYTES, STATUS_REGISTER);
-		  sprintf(MSG, "Amoun of bytes in FIFOTX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		  memset(MSG, 0, sizeof MSG);
+//		  readReg(TXBYTES, STATUS_REGISTER);
+//		  sprintf(MSG, "Amoun of bytes in FIFOTX: %i\r\n", (unsigned int)SPI_BUFFER[0]);
+//		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+//		  memset(MSG, 0, sizeof MSG);
 
 		  command_strobe1(STX);
-		  sprintf(MSG, "Gone to TX\r\n");
-		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-
-		  memset(MSG, 0, sizeof MSG);
+//		  sprintf(MSG, "Gone to TX\r\n");
+//		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
+//
+//		  memset(MSG, 0, sizeof MSG);
 
 		  //command_strobe1(SFTX); VAR FÖRSIKTIG!!!!!!!
 
 
 
 	  }
-	  HAL_Delay(50);
+	  HAL_Delay(1);
 
     /* USER CODE END WHILE */
 
