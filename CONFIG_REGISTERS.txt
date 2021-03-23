@@ -1,47 +1,48 @@
-0x00 IOCFG2 GDO2 output pin configuration Yes 71
-0x01 IOCFG1 GDO1 output pin configuration Yes 71
-0x02 IOCFG0 GDO0 output pin configuration Yes 71
-0x03 FIFOTHR RX FIFO and TX FIFO thresholds Yes 72
-0x04 SYNC1 Sync word, high byte Yes 73
-0x05 SYNC0 Sync word, low byte Yes 73
-0x06 PKTLEN Packet length Yes 73
-0x07 PKTCTRL1 Packet automation control Yes 73
-0x08 PKTCTRL0 Packet automation control Yes 74
-0x09 ADDR Device address Yes 74
-0x0A CHANNR Channel number Yes 74
-0x0B FSCTRL1 Frequency synthesizer control Yes 75
-0x0C FSCTRL0 Frequency synthesizer control Yes 75
-0x0D FREQ2 Frequency control word, high byte Yes 75
-0x0E FREQ1 Frequency control word, middle byte Yes 75
-0x0F FREQ0 Frequency control word, low byte Yes 75
-0x10 MDMCFG4 Modem configuration Yes 76
-0x11 MDMCFG3 Modem configuration Yes 76
-0x12 MDMCFG2 Modem configuration Yes 77
-0x13 MDMCFG1 Modem configuration Yes 78
-0x14 MDMCFG0 Modem configuration Yes 78
-0x15 DEVIATN Modem deviation setting Yes 79
-0x16 MCSM2 Main Radio Control State Machine configuration Yes 80
-0x17 MCSM1 Main Radio Control State Machine configuration Yes 81
-0x18 MCSM0 Main Radio Control State Machine configuration Yes 82
-0x19 FOCCFG Frequency Offset Compensation configuration Yes 83
-0x1A BSCFG Bit Synchronization configuration Yes 84
-0x1B AGCTRL2 AGC control Yes 85
-0x1C AGCTRL1 AGC control Yes 86
-0x1D AGCTRL0 AGC control Yes 87
-0x1E WOREVT1 High byte Event 0 timeout Yes 87
-0x1F WOREVT0 Low byte Event 0 timeout Yes 88
-0x20 WORCTRL Wake On Radio control Yes 88
-0x21 FREND1 Front end RX configuration Yes 89
-0x22 FREND0 Front end TX configuration Yes 89
-0x23 FSCAL3 Frequency synthesizer calibration Yes 89
-0x24 FSCAL2 Frequency synthesizer calibration Yes 90
-0x25 FSCAL1 Frequency synthesizer calibration Yes 90
-0x26 FSCAL0 Frequency synthesizer calibration Yes 90
-0x27 RCCTRL1 RC oscillator configuration Yes 90
-0x28 RCCTRL0 RC oscillator configuration Yes 90
-0x29 FSTEST Frequency synthesizer calibration control No 91
-0x2A PTEST Production test No 91
-0x2B AGCTEST AGC test No 91
-0x2C TEST2 Various test settings No 91
-0x2D TEST1 Various test settings No 91
-0x2E TEST0 Various test settings No 92
+0x00 IF_MIX_CFG Yes
+0x01 FREQOFF_CFG Yes
+0x02 TOC_CFG Yes
+0x03 MARC_SPARE Yes
+0x04 ECG_CFG Yes
+0x05 MDMCFG2 Yes
+0x06 EXT_CTRL Yes
+0x07 RCCAL_FINE Yes
+0x08 RCCAL_COARSE Yes
+0x09 RCCAL_OFFSET Yes
+0x0A FREQOFF1 Yes
+0x0B FREQOFF0 Yes
+0x0C FREQ2 Yes
+0x0D FREQ1 Yes
+0x0E FREQ0 Yes
+0x0F IF_ADC2 Yes
+0x10 IF_ADC1 Yes
+0x11 IF_ADC0 Yes
+0x12 FS_DIG1 Yes
+0x13 FS_DIG0 Yes
+0x14 FS_CAL3 Yes
+0x15 FS_CAL2 Yes
+0x16 FS_CAL1 Yes
+0x17 FS_CAL0 Yes
+0x18 FS_CHP Yes
+0x19 FS_DIVTWO Yes
+0x1A FS_DSM1 Yes
+0x1B FS_DSM0 Yes
+0x1C FS_DVC1 Yes
+0x1D FS_DVC0 Yes
+0x1E FS_LBI Yes
+0x1F FS_PFD Yes
+0x20 FS_PRE Yes
+0x21 FS_REG_DIV_CML Yes
+0x22 FS_SPARE Yes
+0x23 FS_VCO4 Yes
+0x24 FS_VCO3 Yes
+0x25 FS_VCO2 Yes
+0x26 FS_VCO1 Yes
+0x27 FS_VCO0 Yes
+0x28 GBIAS6 Yes
+0x29 GBIAS5 Yes
+0x2A GBIAS4 Yes
+0x2B GBIAS3 Yes
+0x2C GBIAS2 Yes
+0x2D GBIAS1 Yes
+0x2E GBIAS0 Yes
+0x2F IFAMP Yes
