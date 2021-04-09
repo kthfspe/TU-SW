@@ -262,6 +262,9 @@ SPI_HandleTypeDef hspi3;
 
 /* USER CODE BEGIN PV */
 char SPI_BUFFER[8];
+int state = 2;
+int prev_state = 1;
+
 
 /* USER CODE END PV */
 
@@ -349,15 +352,41 @@ void readReg(uint16_t regAddr) {
 		CS_Deselect();                    							 		 // set the SS pin to HIGH
 	}
     else if (extended_or_not == 0x2F){
-    	addr = extended_addr | RADIO_READ_ACCESS;			  				 // Bitwise and to get the right address
+    	extended_or_not = extended_or_not | RADIO_READ_ACCESS;			  				 // Bitwise and to get the right address
 		CS_Select();                										 // set the SS pin to LOW
 		wait_Miso();                          								 // Wait until MISO goes low
 		HAL_SPI_Transmit(&hspi3, (uint8_t*)&extended_or_not, 1, 100);		 // Access the extended registers
-		HAL_SPI_Transmit(&hspi3, (uint8_t*)&addr, 1, 100);                   // Send register address
+		HAL_SPI_Transmit(&hspi3, (uint8_t*)&extended_addr, 1, 100);                   // Send register address
 		HAL_SPI_Receive(&hspi3, (uint8_t*)&SPI_BUFFER, 1, 100);            	 // Read result
 		CS_Deselect();                    							 		 // set the SS pin to HIGH
 
     }
+}
+
+// Send data with sequence numbers
+void send_data_sequence(char databuffer[],uint8_t length,uint16_t sequence ){
+	int i;
+	uint8_t element;
+	uint8_t LSB_seq;
+	uint8_t MSB_seq;
+	LSB_seq = sequence & 0xFF;
+	MSB_seq = sequence >> 8;
+	CS_Select();                		 								// set the CS pin to LOW
+    wait_Miso();                         								// Wait until MISO goes low
+    uint8_t TXfifo = SINGLE_TXFIFO;
+    HAL_SPI_Transmit(&hspi3, (uint8_t*)&TXfifo, 1, 100);               // Access the TX_FIFO register
+    HAL_SPI_Transmit(&hspi3, (uint8_t*)&length, 1, 100);			   // Send length of data
+    HAL_SPI_Transmit(&hspi3, (uint8_t*)&TXfifo, 1, 100);               // Access the TX_FIFO register
+    HAL_SPI_Transmit(&hspi3, (uint8_t*)&MSB_seq, 1, 100);			   // Send MSB of sequence number
+    HAL_SPI_Transmit(&hspi3, (uint8_t*)&TXfifo, 1, 100);               // Access the TX_FIFO register
+    HAL_SPI_Transmit(&hspi3, (uint8_t*)&LSB_seq, 1, 100);			   // Send LSB of sequence number
+    for (i = 0; i < length-2; ++i)
+        {
+          element = databuffer[i];
+		  HAL_SPI_Transmit(&hspi3, (uint8_t*)&TXfifo, 1, 100);               // Send the data
+		  HAL_SPI_Transmit(&hspi3, (uint8_t*)&element, 1, 100);                  // Send data
+        }
+    CS_Deselect();
 }
 
 /* USER CODE END 0 */
@@ -370,6 +399,11 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+	int datalen = 4;   // Set length of payload. Note that the first length byte is not inluded in this.
+						// However the 2 sequence bytes are included. Max value is 63.
+	char data[datalen];
+
+	uint16_t sequence_number = 1;
   /* USER CODE END 1 */
   
 
@@ -395,7 +429,71 @@ int main(void)
   MX_CAN2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
- // CS_Deselect();
+  HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(PA_EN_GPIO_Port, PA_EN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(HGM_GPIO_Port, HGM_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LNA_EN_GPIO_Port, LNA_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+
+  // CC1200_settings
+  halRfWriteReg(IOCFG2,0x06);        //GPIO2 IO Pin Configuration
+  halRfWriteReg(SYNC_CFG1,0xA9);     //Sync Word Detection Configuration Reg. 1
+  halRfWriteReg(MODCFG_DEV_E,0x0B);  //Modulation Format and Frequency Deviation Configur..
+  halRfWriteReg(PREAMBLE_CFG0,0x8A); //Preamble Detection Configuration Reg. 0
+  halRfWriteReg(IQIC,0xC8);          //Digital Image Channel Compensation Configuration
+  halRfWriteReg(CHAN_BW,0x0B);       //Channel Filter Configuration
+  halRfWriteReg(MDMCFG1,0x40);       //General Modem Parameter Configuration Reg. 1
+  halRfWriteReg(MDMCFG0,0x05);       //General Modem Parameter Configuration Reg. 0
+  halRfWriteReg(SYMBOL_RATE2,0x9C);  //Symbol Rate Configuration Exponent and Mantissa [1..
+  halRfWriteReg(SYMBOL_RATE1,0xAC);  //Symbol Rate Configuration Mantissa [15:8]
+  halRfWriteReg(SYMBOL_RATE0,0x08);  //Symbol Rate Configuration Mantissa [7:0]
+  halRfWriteReg(AGC_REF,0x28);       //AGC Reference Level Configuration
+  halRfWriteReg(AGC_CS_THR,0xEE);    //Carrier Sense Threshold Configuration
+  halRfWriteReg(AGC_CFG1,0x11);      //Automatic Gain Control Configuration Reg. 1
+  halRfWriteReg(AGC_CFG0,0x94);      //Automatic Gain Control Configuration Reg. 0
+  halRfWriteReg(FIFO_CFG,0x00);      //FIFO Configuration
+  halRfWriteReg(FS_CFG,0x12);        //Frequency Synthesizer Configuration
+  halRfWriteReg(PKT_CFG2,0x00);      //Packet Configuration Reg. 2
+  halRfWriteReg(PKT_CFG1,0x43);      //Packet Configuration Reg. 1
+  halRfWriteReg(PKT_CFG0,0x20);      //Packet Configuration Reg. 0
+  halRfWriteReg(PA_CFG0,0x53);       //Power Amplifier Configuration Reg. 0
+  halRfWriteReg(PKT_LEN,0xFF);       //Packet Length Configuration
+  halRfWriteReg(IF_MIX_CFG,0x1C);    //IF Mix Configuration
+  halRfWriteReg(FREQOFF_CFG,0x22);   //Frequency Offset Correction Configuration
+  halRfWriteReg(TOC_CFG,0x03);       //Timing Offset Correction Configuration
+  halRfWriteReg(MDMCFG2,0x02);       //General Modem Parameter Configuration Reg. 2
+  halRfWriteReg(FREQ2,0x57);         //Frequency Configuration [23:16]
+  halRfWriteReg(FREQ1,0x0F);         //Frequency Configuration [15:8]
+  halRfWriteReg(FREQ0,0x5C);         //Frequency Configuration [7:0]
+  halRfWriteReg(IF_ADC1,0xEE);       //Analog to Digital Converter Configuration Reg. 1
+  halRfWriteReg(IF_ADC0,0x10);       //Analog to Digital Converter Configuration Reg. 0
+  halRfWriteReg(FS_DIG1,0x04);       //Frequency Synthesizer Digital Reg. 1
+  halRfWriteReg(FS_DIG0,0x50);       //Frequency Synthesizer Digital Reg. 0
+  halRfWriteReg(FS_CAL1,0x40);       //Frequency Synthesizer Calibration Reg. 1
+  halRfWriteReg(FS_CAL0,0x0E);       //Frequency Synthesizer Calibration Reg. 0
+  halRfWriteReg(FS_DIVTWO,0x03);     //Frequency Synthesizer Divide by 2
+  halRfWriteReg(FS_DSM0,0x33);       //FS Digital Synthesizer Module Configuration Reg. 0
+  halRfWriteReg(FS_DVC1,0xF7);       //Frequency Synthesizer Divider Chain Configuration ..
+  halRfWriteReg(FS_DVC0,0x0F);       //Frequency Synthesizer Divider Chain Configuration ..
+  halRfWriteReg(FS_PFD,0x00);        //Frequency Synthesizer Phase Frequency Detector Con..
+  halRfWriteReg(FS_PRE,0x6E);        //Frequency Synthesizer Prescaler Configuration
+  halRfWriteReg(FS_REG_DIV_CML,0x1C);//Frequency Synthesizer Divider Regulator Configurat..
+  halRfWriteReg(FS_SPARE,0xAC);      //Frequency Synthesizer Spare
+  halRfWriteReg(FS_VCO0,0xB5);       //FS Voltage Controlled Oscillator Configuration Reg..
+  halRfWriteReg(IFAMP,0x09);         //Intermediate Frequency Amplifier Configuration
+  halRfWriteReg(XOSC5,0x0E);         //Crystal Oscillator Configuration Reg. 5
+  halRfWriteReg(XOSC1,0x03);         //Crystal Oscillator Configuration Reg. 1
+  halRfWriteReg(PARTNUMBER,0x20);    //Part Number
+  halRfWriteReg(PARTVERSION,0x11);   //Part Revision
+  halRfWriteReg(MODEM_STATUS1,0x10); //Modem Status Reg. 1
+
+  // Create data array
+	int i;
+	for (i = 0; i < sizeof(data); ++i)
+	  {
+		data[i] = 2 * i;
+	  }
   /* USER CODE END 2 */
  
  
@@ -404,12 +502,56 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  if (state == 2){
+		  if (prev_state != 2){
+		  readReg(MARCSTATE);
+		  sequence_number = 1;
+		  prev_state = 2;
+
+	  	  }
+
+
+	  }
+	  if (state == 1){
+
+
+		  if (prev_state != 1){
+
+		  readReg(MARCSTATE);
+
+
+		  readReg(NUM_TXBYTES);
+
+		  prev_state = 1;
+		  }
+
+		  readReg(NUM_TXBYTES);
+		  if (SPI_BUFFER[0] == 0){
+
+		  send_data_sequence(data, datalen,sequence_number);
+
+		  sequence_number += 1;
+		  if (sequence_number > 10000){
+			  sequence_number = 1;
+		  }
+		  }
+
+//		  readReg(TXBYTES, STATUS_REGISTER);
+
+		  readReg(NUM_TXBYTES);
+		  command_strobe1(STX);
+
+
+		  //command_strobe1(SFTX); VAR FÖRSIKTIG!!!!!!!
+
+
+
+	  }
+	  HAL_Delay(1);
+
     /* USER CODE END WHILE */
-	  HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 
-
-	  HAL_Delay(500);
-	  //readReg(PARTNUMBER);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -576,33 +718,44 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, LED3_Pin|LED1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, PA_EN_Pin|HGM_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, LNA_EN_Pin|LED_GREEN_Pin|LED_BLUE_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(HIGH_GPIO_Port, HIGH_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LED3_Pin LED1_Pin */
-  GPIO_InitStruct.Pin = LED3_Pin|LED1_Pin;
+  /*Configure GPIO pins : PA_EN_Pin LNA_EN_Pin HGM_Pin LED_GREEN_Pin 
+                           LED_BLUE_Pin */
+  GPIO_InitStruct.Pin = PA_EN_Pin|LNA_EN_Pin|HGM_Pin|LED_GREEN_Pin 
+                          |LED_BLUE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED2_Pin */
-  GPIO_InitStruct.Pin = LED2_Pin;
+  /*Configure GPIO pin : HIGH_Pin */
+  GPIO_InitStruct.Pin = HIGH_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(HIGH_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Button_Pin */
+  GPIO_InitStruct.Pin = Button_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Button_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI3_CS_Pin */
   GPIO_InitStruct.Pin = SPI3_CS_Pin;
@@ -611,10 +764,28 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(SPI3_CS_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
+void  HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
+	if (GPIO_Pin == Button_Pin) {
+			if (state == 1){
+				state = 2;
+				HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+
+				  }
+			else {
+				state = 1;
+				HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+
+			}
+	}
+}
 /* USER CODE END 4 */
 
 /**

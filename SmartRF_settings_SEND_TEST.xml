@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE configuration SYSTEM "C:/Program Files (x86)/Texas Instruments/SmartRF Tools/SmartRF Studio 7/config/xml/configdata.dtd"[]>
+<dcpanelconfiguration>
+    <Devicename>CC1200</Devicename>
+    <Description>Saved configuration data</Description>
+    <registersettings>
+        <Register>
+            <Name>AGC_CFG0</Name>
+            <Value>0x94</Value>
+        </Register>
+        <Register>
+            <Name>AGC_CFG1</Name>
+            <Value>0x11</Value>
+        </Register>
+        <Register>
+            <Name>AGC_CS_THR</Name>
+            <Value>0xee</Value>
+        </Register>
+        <Register>
+            <Name>AGC_REF</Name>
+            <Value>0x28</Value>
+        </Register>
+        <Register>
+            <Name>CHAN_BW</Name>
+            <Value>0x0b</Value>
+        </Register>
+        <Register>
+            <Name>FIFO_CFG</Name>
+            <Value>0x00</Value>
+        </Register>
+        <Register>
+            <Name>FREQ0</Name>
+            <Value>0x5c</Value>
+        </Register>
+        <Register>
+            <Name>FREQ1</Name>
+            <Value>0x0f</Value>
+        </Register>
+        <Register>
+            <Name>FREQ2</Name>
+            <Value>0x57</Value>
+        </Register>
+        <Register>
+            <Name>FS_CAL0</Name>
+            <Value>0x0e</Value>
+        </Register>
+        <Register>
+            <Name>FS_CAL1</Name>
+            <Value>0x40</Value>
+        </Register>
+        <Register>
+            <Name>FS_CFG</Name>
+            <Value>0x12</Value>
+        </Register>
+        <Register>
+            <Name>FS_DIG0</Name>
+            <Value>0x50</Value>
+        </Register>
+        <Register>
+            <Name>FS_DIG1</Name>
+            <Value>0x04</Value>
+        </Register>
+        <Register>
+            <Name>FS_DIVTWO</Name>
+            <Value>0x03</Value>
+        </Register>
+        <Register>
+            <Name>FS_DSM0</Name>
+            <Value>0x33</Value>
+        </Register>
+        <Register>
+            <Name>FS_DVC0</Name>
+            <Value>0x0f</Value>
+        </Register>
+        <Register>
+            <Name>FS_DVC1</Name>
+            <Value>0xf7</Value>
+        </Register>
+        <Register>
+            <Name>FS_PFD</Name>
+            <Value>0x00</Value>
+        </Register>
+        <Register>
+            <Name>FS_PRE</Name>
+            <Value>0x6e</Value>
+        </Register>
+        <Register>
+            <Name>FS_REG_DIV_CML</Name>
+            <Value>0x1c</Value>
+        </Register>
+        <Register>
+            <Name>FS_SPARE</Name>
+            <Value>0xac</Value>
+        </Register>
+        <Register>
+            <Name>FS_VCO0</Name>
+            <Value>0xb5</Value>
+        </Register>
+        <Register>
+            <Name>IFAMP</Name>
+            <Value>0x09</Value>
+        </Register>
+        <Register>
+            <Name>IF_ADC0</Name>
+            <Value>0x10</Value>
+        </Register>
+        <Register>
+            <Name>IF_ADC1</Name>
+            <Value>0xee</Value>
+        </Register>
+        <Register>
+            <Name>IF_MIX_CFG</Name>
+            <Value>0x1c</Value>
+        </Register>
+        <Register>
+            <Name>IOCFG2</Name>
+            <Value>0x06</Value>
+        </Register>
+        <Register>
+            <Name>IQIC</Name>
+            <Value>0xc8</Value>
+        </Register>
+        <Register>
+            <Name>MDMCFG0</Name>
+            <Value>0x05</Value>
+        </Register>
+        <Register>
+            <Name>MDMCFG1</Name>
+            <Value>0x42</Value>
+        </Register>
+        <Register>
+            <Name>MDMCFG2</Name>
+            <Value>0x02</Value>
+        </Register>
+        <Register>
+            <Name>MODCFG_DEV_E</Name>
+            <Value>0x0b</Value>
+        </Register>
+        <Register>
+            <Name>MODEM_STATUS1</Name>
+            <Value>0x10</Value>
+        </Register>
+        <Register>
+            <Name>PARTNUMBER</Name>
+            <Value>0x20</Value>
+        </Register>
+        <Register>
+            <Name>PARTVERSION</Name>
+            <Value>0x11</Value>
+        </Register>
+        <Register>
+            <Name>PA_CFG0</Name>
+            <Value>0x53</Value>
+        </Register>
+        <Register>
+            <Name>PKT_CFG0</Name>
+            <Value>0x20</Value>
+        </Register>
+        <Register>
+            <Name>PKT_CFG1</Name>
+            <Value>0x43</Value>
+        </Register>
+        <Register>
+            <Name>PKT_CFG2</Name>
+            <Value>0x00</Value>
+        </Register>
+        <Register>
+            <Name>PKT_LEN</Name>
+            <Value>0xff</Value>
+        </Register>
+        <Register>
+            <Name>PREAMBLE_CFG0</Name>
+            <Value>0x8a</Value>
+        </Register>
+        <Register>
+            <Name>SYMBOL_RATE0</Name>
+            <Value>0x08</Value>
+        </Register>
+        <Register>
+            <Name>SYMBOL_RATE1</Name>
+            <Value>0xac</Value>
+        </Register>
+        <Register>
+            <Name>SYMBOL_RATE2</Name>
+            <Value>0x9c</Value>
+        </Register>
+        <Register>
+            <Name>SYNC_CFG1</Name>
+            <Value>0xa9</Value>
+        </Register>
+        <Register>
+            <Name>TOC_CFG</Name>
+            <Value>0x03</Value>
+        </Register>
+        <Register>
+            <Name>XOSC1</Name>
+            <Value>0x03</Value>
+        </Register>
+        <Register>
+            <Name>XOSC5</Name>
+            <Value>0x0e</Value>
+        </Register>
+    </registersettings>
+    <dcpanel>
+        <Property role="44" name="m_chkRegView">2</Property>
+        <Property role="44" name="m_chkCmdView">0</Property>
+        <Property role="44" name="m_chkRfParameters">2</Property>
+        <Property role="46" name="m_cmbUserMode">1</Property>
+        <Property role="33" name="m_easyModeSettings">-1</Property>
+        <Property role="33" name="m_typicalSettings">-1</Property>
+        <Property role="37" name="m_testFuncPanel">2</Property>
+    </dcpanel>
+    <rfparameters>
+        <Property role="46" name="m_cmbFrontends">0</Property>
+        <Property role="44" name="m_chkHGMorBYP">2</Property>
+        <Property role="46" name="m_cmbEmRevs">-1</Property>
+        <Property role="46" name="Xtal Frequency">40.000000</Property>
+    </rfparameters>
+    <conttx>
+        <Property role="45" name="m_rbtModulated">1</Property>
+        <Property role="45" name="m_rbtUnmodulated">0</Property>
+        <Property role="46" name="m_cmbDataFormat">-1</Property>
+        <Property role="44" name="m_chkFreqSweep">0</Property>
+        <Property role="44" name="m_chkChanSweep">0</Property>
+    </conttx>
+    <contrx>
+        <Property role="46" name="m_cmbDataFormat">-1</Property>
+        <Property role="44" name="m_chkAutoScroll">2</Property>
+    </contrx>
+    <packettx>
+        <Property role="42" name="m_edtPacketCount">100</Property>
+        <Property role="42" name="m_edtPacketCountEsy">100</Property>
+        <Property role="42" name="m_edtFixedPktLength">255</Property>
+        <Property role="42" name="m_edtPacketData">aa 6e b7 4c b0 cc 89 4f 7b 33 42 9b 73 f7 36 43 30 dd 63 5d 40 d3 54 58 25 de 45 90 </Property>
+        <Property role="42" name="m_edtAccessAddress"></Property>
+        <Property role="44" name="m_chkAddSeqNbr">2</Property>
+        <Property role="44" name="m_chkInfinite">0</Property>
+        <Property role="44" name="m_chkInfiniteEsy">0</Property>
+        <Property role="45" name="m_rbtRandom">1</Property>
+        <Property role="45" name="m_rbtText">0</Property>
+        <Property role="45" name="m_rbtHex">0</Property>
+        <Property role="44" name="m_chkAdvanced">0</Property>
+        <Property role="46" name="m_cmbLengthConfig">1</Property>
+        <Property role="42" name="m_edtFixedPktLength">255</Property>
+        <Property role="42" name="m_edtBitLength">0</Property>
+        <Property role="20" name="m_grp802154g">0</Property>
+        <Property role="42" name="m_edt802154gPktLength">30</Property>
+        <Property role="45" name="m_rbt802154g2BCrc">1</Property>
+        <Property role="45" name="m_rbt802154g4BCrc">0</Property>
+        <Property role="44" name="m_chk802154gWhitening">2</Property>
+        <Property role="44" name="m_chkFEC">0</Property>
+        <Property role="46" name="m_cmbPreambleCount">5</Property>
+        <Property role="44" name="m_chkAddress">0</Property>
+        <Property role="46" name="m_cmbSyncMode">5</Property>
+    </packettx>
+    <packetview>
+        <Property role="42" name="m_edtPktLength">30</Property>
+        <Property role="42" name="m_edtAddress"></Property>
+        <Property role="41" name="m_lblFrmPayload">aa 6e b7 4c b0 cc 89 4f 7b 33 42 9b 73 f7 36 43 30 dd 63 5d 40 d3 54 58 25 de 45 90 </Property>
+    </packetview>
+    <packetrx>
+        <Property role="42" name="m_edtPacketCount">100</Property>
+        <Property role="42" name="m_edtPacketCountEsy">100</Property>
+        <Property role="42" name="m_edtAccessAddress"></Property>
+        <Property role="44" name="m_chkInfinite">0</Property>
+        <Property role="44" name="m_chkInfiniteEsy">0</Property>
+        <Property role="46" name="m_cmbViewFormat">0</Property>
+        <Property role="44" name="m_chkSeqNbrIncluded">2</Property>
+        <Property role="42" name="m_edtDumpFile"></Property>
+        <Property role="44" name="m_chkAdvanced">0</Property>
+        <Property role="44" name="m_chk802154gMode">0</Property>
+    </packetrx>
+    <commandpanel>
+        <Property role="44" name="m_chkInsertLength">0</Property>
+        <Property role="42" name="m_edtTxFifo"></Property>
+        <Property role="42" name="m_edtRxFifo"></Property>
+        <Property role="46" name="m_cmbInstrInput">-1</Property>
+    </commandpanel>
+    <packetRxSniffMode>
+        <Property role="42" name="m_edtPreambleLength">24</Property>
+        <Property role="42" name="m_edtCarrierSenseThreshold">-90</Property>
+        <Property role="45" name="m_rbtRssi">1</Property>
+        <Property role="45" name="m_rbtPreamble">0</Property>
+    </packetRxSniffMode>
+</dcpanelconfiguration>
