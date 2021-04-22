@@ -247,6 +247,10 @@
 #define RADIO_READ_ACCESS    	0x80
 #define RADIO_WRITE_ACCESS   	0x00
 
+// Data modes
+#define DATA_MODE_50kbps   	    0x1
+#define DATA_MODE_250kbps       0x2
+#define DATA_MODE_500kbps   	0x3
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -264,6 +268,7 @@ SPI_HandleTypeDef hspi3;
 char SPI_BUFFER[8];
 int state = 2;
 int prev_state = 1;
+int data_mode = DATA_MODE_50kbps;
 
 
 /* USER CODE END PV */
@@ -433,60 +438,12 @@ int main(void)
   HAL_GPIO_WritePin(PA_EN_GPIO_Port, PA_EN_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(HGM_GPIO_Port, HGM_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(LNA_EN_GPIO_Port, LNA_EN_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
 
   // CC1200_settings
-  halRfWriteReg(IOCFG2,0x06);        //GPIO2 IO Pin Configuration
-  halRfWriteReg(SYNC_CFG1,0xA9);     //Sync Word Detection Configuration Reg. 1
-  halRfWriteReg(MODCFG_DEV_E,0x0B);  //Modulation Format and Frequency Deviation Configur..
-  halRfWriteReg(PREAMBLE_CFG0,0x8A); //Preamble Detection Configuration Reg. 0
-  halRfWriteReg(IQIC,0xC8);          //Digital Image Channel Compensation Configuration
-  halRfWriteReg(CHAN_BW,0x0B);       //Channel Filter Configuration
-  halRfWriteReg(MDMCFG1,0x40);       //General Modem Parameter Configuration Reg. 1
-  halRfWriteReg(MDMCFG0,0x05);       //General Modem Parameter Configuration Reg. 0
-  halRfWriteReg(SYMBOL_RATE2,0x9C);  //Symbol Rate Configuration Exponent and Mantissa [1..
-  halRfWriteReg(SYMBOL_RATE1,0xAC);  //Symbol Rate Configuration Mantissa [15:8]
-  halRfWriteReg(SYMBOL_RATE0,0x08);  //Symbol Rate Configuration Mantissa [7:0]
-  halRfWriteReg(AGC_REF,0x28);       //AGC Reference Level Configuration
-  halRfWriteReg(AGC_CS_THR,0xEE);    //Carrier Sense Threshold Configuration
-  halRfWriteReg(AGC_CFG1,0x11);      //Automatic Gain Control Configuration Reg. 1
-  halRfWriteReg(AGC_CFG0,0x94);      //Automatic Gain Control Configuration Reg. 0
-  halRfWriteReg(FIFO_CFG,0x00);      //FIFO Configuration
-  halRfWriteReg(FS_CFG,0x12);        //Frequency Synthesizer Configuration
-  halRfWriteReg(PKT_CFG2,0x00);      //Packet Configuration Reg. 2
-  halRfWriteReg(PKT_CFG1,0x43);      //Packet Configuration Reg. 1
-  halRfWriteReg(PKT_CFG0,0x20);      //Packet Configuration Reg. 0
-  halRfWriteReg(PA_CFG0,0x53);       //Power Amplifier Configuration Reg. 0
-  halRfWriteReg(PKT_LEN,0xFF);       //Packet Length Configuration
-  halRfWriteReg(IF_MIX_CFG,0x1C);    //IF Mix Configuration
-  halRfWriteReg(FREQOFF_CFG,0x22);   //Frequency Offset Correction Configuration
-  halRfWriteReg(TOC_CFG,0x03);       //Timing Offset Correction Configuration
-  halRfWriteReg(MDMCFG2,0x02);       //General Modem Parameter Configuration Reg. 2
-  halRfWriteReg(FREQ2,0x57);         //Frequency Configuration [23:16]
-  halRfWriteReg(FREQ1,0x0F);         //Frequency Configuration [15:8]
-  halRfWriteReg(FREQ0,0x5C);         //Frequency Configuration [7:0]
-  halRfWriteReg(IF_ADC1,0xEE);       //Analog to Digital Converter Configuration Reg. 1
-  halRfWriteReg(IF_ADC0,0x10);       //Analog to Digital Converter Configuration Reg. 0
-  halRfWriteReg(FS_DIG1,0x04);       //Frequency Synthesizer Digital Reg. 1
-  halRfWriteReg(FS_DIG0,0x50);       //Frequency Synthesizer Digital Reg. 0
-  halRfWriteReg(FS_CAL1,0x40);       //Frequency Synthesizer Calibration Reg. 1
-  halRfWriteReg(FS_CAL0,0x0E);       //Frequency Synthesizer Calibration Reg. 0
-  halRfWriteReg(FS_DIVTWO,0x03);     //Frequency Synthesizer Divide by 2
-  halRfWriteReg(FS_DSM0,0x33);       //FS Digital Synthesizer Module Configuration Reg. 0
-  halRfWriteReg(FS_DVC1,0xF7);       //Frequency Synthesizer Divider Chain Configuration ..
-  halRfWriteReg(FS_DVC0,0x0F);       //Frequency Synthesizer Divider Chain Configuration ..
-  halRfWriteReg(FS_PFD,0x00);        //Frequency Synthesizer Phase Frequency Detector Con..
-  halRfWriteReg(FS_PRE,0x6E);        //Frequency Synthesizer Prescaler Configuration
-  halRfWriteReg(FS_REG_DIV_CML,0x1C);//Frequency Synthesizer Divider Regulator Configurat..
-  halRfWriteReg(FS_SPARE,0xAC);      //Frequency Synthesizer Spare
-  halRfWriteReg(FS_VCO0,0xB5);       //FS Voltage Controlled Oscillator Configuration Reg..
-  halRfWriteReg(IFAMP,0x09);         //Intermediate Frequency Amplifier Configuration
-  halRfWriteReg(XOSC5,0x0E);         //Crystal Oscillator Configuration Reg. 5
-  halRfWriteReg(XOSC1,0x03);         //Crystal Oscillator Configuration Reg. 1
-  halRfWriteReg(PARTNUMBER,0x20);    //Part Number
-  halRfWriteReg(PARTVERSION,0x11);   //Part Revision
-  halRfWriteReg(MODEM_STATUS1,0x10); //Modem Status Reg. 1
+  CC1200_50kbps_settings();
+
 
   // Create data array
 	int i;
@@ -506,6 +463,10 @@ int main(void)
 	  if (state == 2){
 		  if (prev_state != 2){
 		  readReg(MARCSTATE);
+		  if (SPI_BUFFER[0] == 22)
+		  {
+			  command_strobe1(SFTX);
+		  }
 		  sequence_number = 1;
 		  prev_state = 2;
 
@@ -514,8 +475,11 @@ int main(void)
 
 	  }
 	  if (state == 1){
-
-
+		  readReg(MARCSTATE);
+		  if (SPI_BUFFER[0] == 22)
+		  		  {
+		  			  command_strobe1(SFTX);
+		  		  }
 		  if (prev_state != 1){
 
 		  readReg(MARCSTATE);
@@ -774,14 +738,38 @@ static void MX_GPIO_Init(void)
 void  HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
 	if (GPIO_Pin == Button_Pin) {
+
+
 			if (state == 1){
-				state = 2;
-				HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+
+				if (data_mode == DATA_MODE_50kbps){
+					data_mode = DATA_MODE_250kbps;
+					CC1200_250kbps_settings();
+					HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+				}
+
+				else if (data_mode == DATA_MODE_250kbps){
+					data_mode = DATA_MODE_500kbps;
+					CC1200_500kbps_settings();
+					HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+					HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+				}
+				else{
+					state = 2;
+					HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+				}
+
 
 				  }
 			else {
 				state = 1;
-				HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+				data_mode = DATA_MODE_50kbps;
+				CC1200_50kbps_settings();
+				HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+				HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+
 
 			}
 	}
