@@ -239,9 +239,9 @@
 #define SINGLE_TXFIFO            0x003F     /*  TXFIFO  - Single accecss to Transmit FIFO */
 #define BURST_TXFIFO             0x007F     /*  TXFIFO  - Burst accecss to Transmit FIFO  */
 #define SINGLE_RXFIFO            0x00BF     /*  RXFIFO  - Single accecss to Receive FIFO  */
-#define BURST_RXFIFO             0x00FF     /*  RXFIFO  - Busrrst ccecss to Receive FIFO  */
+#define BURST_RXFIFO             0x00FF     /*  RXFIFO  - Burst accecss to Receive FIFO  */
 
-// Other Register Access
+// Other Register Access, look at page 11 of user manual
 #define RADIO_BURST_ACCESS   	0x40
 #define RADIO_SINGLE_ACCESS  	0x00
 #define RADIO_READ_ACCESS    	0x80
@@ -317,7 +317,7 @@ void writeReg(uint16_t regAddr, uint8_t value)
 		HAL_SPI_Transmit(&hspi3, (uint8_t*)&value, 1, 100);                  // Send value
 		CS_Deselect();                    	   							   // Deselect CC1101
 	}
-	else if (extended_or_not == 0x2F){
+	else if (extended_or_not == 0x2F){//read page 9 of user manual, 2F is the flag byte which is followed by the address
 		CS_Select();                     								   // Select CS
 		wait_Miso();                          							   // Wait until MISO goes low
 		HAL_SPI_Transmit(&hspi3, (uint8_t*)&extended_or_not, 1, 100);      // Access the extended registers
@@ -353,7 +353,7 @@ void readReg(uint16_t regAddr) {
 		CS_Select();                										 // set the SS pin to LOW
 		wait_Miso();                          								 // Wait until MISO goes low
 		HAL_SPI_Transmit(&hspi3, (uint8_t*)&addr, 1, 100);                   // Send register address
-		HAL_SPI_Receive(&hspi3, (uint8_t*)&SPI_BUFFER, 1, 100);            	 // Read result
+		HAL_SPI_Receive(&hspi3, (uint8_t*)&SPI_BUFFER, 1, 100);            	 // Read result	
 		CS_Deselect();                    							 		 // set the SS pin to HIGH
 	}
     else if (extended_or_not == 0x2F){
@@ -457,43 +457,39 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+  while (1)//comments in while loop is Karls interpretation
   {
-
-	  if (state == 2){
-		  if (prev_state != 2){
-		  readReg(MARCSTATE);
-		  if (SPI_BUFFER[0] == 22)
-		  {
-			  command_strobe1(SFTX);
-		  }
-		  sequence_number = 1;
-		  prev_state = 2;
-
+	  //If the MCU is in state 2 it will flush the FIFO of the tranciever once(if it's in error state) and then do nothing
+	  if (state == 2){//state2 => both leds off
+		  if (prev_state != 2){ 
+			  readReg(MARCSTATE);
+			  if (SPI_BUFFER[0] == 22)//22 corresponds to TX_FIFO_ERR
+			  {
+				  command_strobe1(SFTX);
+			  }
+			  sequence_number = 1;
+			  prev_state = 2;
 	  	  }
-
-
 	  }
-	  if (state == 1){
-		  readReg(MARCSTATE);
-		  if (SPI_BUFFER[0] == 22)
+
+	  if (state == 1){//state1 => transmit data mode, at least one led on depending on bit rate setting
+		  readReg(MARCSTATE); //state of tranciever
+		  if (SPI_BUFFER[0] == 22)//22 corresponds to TX_FIFO_ERR
 		  		  {
-		  			  command_strobe1(SFTX);
+		  			  command_strobe1(SFTX);//If in error state, flush FIFO
 		  		  }
 		  if (prev_state != 1){
 
 		  readReg(MARCSTATE);
-
-
-		  readReg(NUM_TXBYTES);
+		  readReg(NUM_TXBYTES);//whats the point, SPI_BUFFER gets overwritten at readReg(NUM_TXBYTES) anyway?
 
 		  prev_state = 1;
 		  }
 
 		  readReg(NUM_TXBYTES);
-		  if (SPI_BUFFER[0] == 0){
+		  if (SPI_BUFFER[0] == 0){//if no bytes in FIFO, send data
 
-		  send_data_sequence(data, datalen,sequence_number);
+		  send_data_sequence(data, datalen,sequence_number);//send predefined data with predefined length and a sequence number
 
 		  sequence_number += 1;
 		  if (sequence_number > 10000){
@@ -504,7 +500,7 @@ int main(void)
 //		  readReg(TXBYTES, STATUS_REGISTER);
 
 		  readReg(NUM_TXBYTES);
-		  command_strobe1(STX);
+		  command_strobe1(STX);//Enable TX state
 
 
 		  //command_strobe1(SFTX); VAR FÖRSIKTIG!!!!!!!
@@ -737,7 +733,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void  HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
-	if (GPIO_Pin == Button_Pin) {
+	if (GPIO_Pin == Button_Pin) {//Button triggered interrupt 
 
 
 			if (state == 1){

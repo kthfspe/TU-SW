@@ -1,5 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
+# Toolchain: GNU Tools for STM32 (11.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -11,10 +12,15 @@ RM := rm -rf
 -include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
--include subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(strip $(S_DEPS)),)
+-include $(S_DEPS)
+endif
+ifneq ($(strip $(S_UPPER_DEPS)),)
+-include $(S_UPPER_DEPS)
+endif
 ifneq ($(strip $(C_DEPS)),)
 -include $(C_DEPS)
 endif
@@ -22,9 +28,23 @@ endif
 
 -include ../makefile.defs
 
+OPTIONAL_TOOL_DEPS := \
+$(wildcard ../makefile.defs) \
+$(wildcard ../makefile.init) \
+$(wildcard ../makefile.targets) \
+
+
+BUILD_ARTIFACT_NAME := TU_CC1200_SEND_TEST
+BUILD_ARTIFACT_EXTENSION := elf
+BUILD_ARTIFACT_PREFIX :=
+BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
+
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
 TU_CC1200_SEND_TEST.elf \
+
+MAP_FILES += \
+TU_CC1200_SEND_TEST.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
@@ -32,42 +52,43 @@ default.size.stdout \
 OBJDUMP_LIST += \
 TU_CC1200_SEND_TEST.list \
 
-OBJCOPY_BIN += \
-TU_CC1200_SEND_TEST.bin \
-
 
 # All Target
-all: TU_CC1200_SEND_TEST.elf secondary-outputs
+all: main-build
+
+# Main-build Target
+main-build: TU_CC1200_SEND_TEST.elf secondary-outputs
 
 # Tool invocations
-TU_CC1200_SEND_TEST.elf: $(OBJS) $(USER_OBJS) C:\Users\jocke\STM32CubeIDE\workspace_1.2.0\TU_CC1200_SEND_TEST\STM32F407VGTX_FLASH.ld
-	arm-none-eabi-gcc -o "TU_CC1200_SEND_TEST.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\jocke\STM32CubeIDE\workspace_1.2.0\TU_CC1200_SEND_TEST\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TU_CC1200_SEND_TEST.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+TU_CC1200_SEND_TEST.elf TU_CC1200_SEND_TEST.map: $(OBJS) $(USER_OBJS) C:\Users\karls\OneDrive\Dokument\Formula_Student\Projects\TU\TU-SW\TU_CC1200_SEND_TEST\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "TU_CC1200_SEND_TEST.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\karls\OneDrive\Dokument\Formula_Student\Projects\TU\TU-SW\TU_CC1200_SEND_TEST\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TU_CC1200_SEND_TEST.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-default.size.stdout: $(EXECUTABLES)
+default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-size  $(EXECUTABLES)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-TU_CC1200_SEND_TEST.list: $(EXECUTABLES)
+TU_CC1200_SEND_TEST.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "TU_CC1200_SEND_TEST.list"
-	@echo 'Finished building: $@'
-	@echo ' '
-
-TU_CC1200_SEND_TEST.bin: $(EXECUTABLES)
-	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "TU_CC1200_SEND_TEST.bin"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) *
+	-$(RM) TU_CC1200_SEND_TEST.elf TU_CC1200_SEND_TEST.list TU_CC1200_SEND_TEST.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
 
-.PHONY: all clean dependents
-.SECONDARY:
+fail-specified-linker-script-missing:
+	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
+	@exit 2
+
+warn-no-linker-script-specified:
+	@echo 'Warning: No linker script specified. Check the linker settings in the build configuration.'
+
+.PHONY: all clean dependents main-build fail-specified-linker-script-missing warn-no-linker-script-specified
 
 -include ../makefile.targets

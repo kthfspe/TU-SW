@@ -84,6 +84,7 @@ void halRfWriteReg(uint16_t setting, uint8_t value);
 #define LED_BLUE_GPIO_Port GPIOE
 #define SPI3_CS_Pin GPIO_PIN_6
 #define SPI3_CS_GPIO_Port GPIOD
+
 /* USER CODE BEGIN Private defines */
 
 //COMMAND STROBES
@@ -306,5 +307,3 @@ void halRfWriteReg(uint16_t setting, uint8_t value);
 #endif
 
 #endif /* __MAIN_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -1,0 +1,16 @@
+../Core/Src/main.c:288:6:CS_Select	1
+../Core/Src/main.c:295:6:CS_Deselect	1
+../Core/Src/main.c:301:6:wait_Miso	2
+../Core/Src/main.c:308:6:writeReg	3
+../Core/Src/main.c:330:6:halRfWriteReg	1
+../Core/Src/main.c:336:6:command_strobe1	1
+../Core/Src/main.c:345:6:readReg	3
+../Core/Src/main.c:371:6:send_data_sequence	2
+../Core/Src/main.c:402:5:main	10
+../Core/Src/main.c:524:6:SystemClock_Config	3
+../Core/Src/main.c:566:13:MX_CAN1_Init	2
+../Core/Src/main.c:603:13:MX_CAN2_Init	2
+../Core/Src/main.c:640:13:MX_SPI3_Init	2
+../Core/Src/main.c:678:13:MX_GPIO_Init	1
+../Core/Src/main.c:741:7:HAL_GPIO_EXTI_Callback	5
+../Core/Src/main.c:786:6:Error_Handler	1

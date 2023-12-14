@@ -260,6 +260,7 @@ void readReg(uint8_t regAddr, uint8_t regType) {
 
 }
 
+//Read len amount of registers starting at regAddr into buffer
 void readRegBurst(int buffer[], uint8_t regAddr, uint8_t len)
 {
   uint8_t addr;
@@ -311,17 +312,18 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
+  //Code is Karls interpretation
   CS_Deselect();
-  sprintf(MSG, "Serial Monitor Engaged\r\n");
-  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-  memset(MSG, 0, sizeof (MSG));
+  sprintf(MSG, "Serial Monitor Engaged\r\n");//Stores the string is MSG
+  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);//Sends message to debug
+  memset(MSG, 0, sizeof (MSG));//Sets all bits of MSG to 0 i.e. clearing the buffer
 
-  readReg(MARCSTATE, STATUS_REGISTER);
+  readReg(MARCSTATE, STATUS_REGISTER);//Read register MARCSTATE(internal transciever state) with register type STATUS_REGISTER, value is put into first byte of SPI_BUFFER
 
-  sprintf(MSG,"Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-  memset(MSG, 0, sizeof MSG);
-  // Start timer
+  sprintf(MSG,"Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);//Store text+state in MSG
+  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);//Send to debug, uart is debugg 
+  memset(MSG, 0, sizeof MSG);//clear the buffer
+  // Start timer	
   HAL_TIM_Base_Start(&htim16);
 
   //RF-chip SETUP SETTINGS (Imported from SMART RF Studios)
@@ -370,30 +372,30 @@ int main(void)
   {
 
 	  if (state == 1 && prev_state != 1 ){
-		command_strobe1(SIDLE);
-		readReg(MARCSTATE, STATUS_REGISTER);
+		command_strobe1(SIDLE);//Exit recieve(or transmitt) mode
+		readReg(MARCSTATE, STATUS_REGISTER);//put transciever state in SPI_BUFFER
 
 
 
-		sprintf(MSG, "MCU_state: 1    Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);
-		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		memset(MSG, 0, sizeof MSG);
+		sprintf(MSG, "MCU_state: 1    Tranceiver_state: %i\r\n", (unsigned int)SPI_BUFFER[0]);//Put state of MCU and Transciever in MSG
+		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);//Send MSG to debug
+		memset(MSG, 0, sizeof MSG);//Clear MSG
 
-		readReg(RXBYTES, STATUS_REGISTER);
-		bytes_in_RXFIFO = SPI_BUFFER[0];
-		sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)bytes_in_RXFIFO);
-		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		memset(MSG, 0, sizeof MSG);
-
-
-		sprintf(MSG, "Recieved packets (CRC ok!): %i\r\n", (unsigned int)recieved_packets);
-		timer_val = __HAL_TIM_GET_COUNTER(&htim16);
-		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
-		timer_val = __HAL_TIM_GET_COUNTER(&htim16) - timer_val;
+		readReg(RXBYTES, STATUS_REGISTER);//Read number of bytes in FIFO(RX) register
+		bytes_in_RXFIFO = SPI_BUFFER[0];//Put amount of bytes in bytes_in_RXFIFO
+		sprintf(MSG, "Amount of bytes in FIFORX: %i\r\n", (unsigned int)bytes_in_RXFIFO);//Put amount of bytes in MSG
+		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);//Send MSG to debug
 		memset(MSG, 0, sizeof MSG);
 
 
-		timer_val = __HAL_TIM_GET_COUNTER(&htim16) - timer_val;
+		sprintf(MSG, "Recieved packets (CRC ok!): %i\r\n", (unsigned int)recieved_packets);//puts amount of recieved packets in MSG
+		timer_val = __HAL_TIM_GET_COUNTER(&htim16);//current time
+		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);//send amount of recieved packets to debug 
+		timer_val = __HAL_TIM_GET_COUNTER(&htim16) - timer_val;//the time it took to send everything
+		memset(MSG, 0, sizeof MSG);
+
+
+		timer_val = __HAL_TIM_GET_COUNTER(&htim16) - timer_val;//Current time minus the time it took to send MSG?
 		sprintf(MSG, "Counter value: %u Time: %u us \r\n", timer_val, timer_val*4);
 		HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
 		memset(MSG, 0, sizeof MSG);
@@ -406,7 +408,7 @@ int main(void)
 	  if (state == 2 && prev_state != 2){
 
 		  if (gone_rx == 0){
-		  command_strobe1(SRX);
+		  command_strobe1(SRX);//Enable RX
 		  sprintf(MSG, "Gone to RX\r\n");
 		  HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
 		  memset(MSG, 0, sizeof MSG);
@@ -644,31 +646,31 @@ void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
 	int i;
 	int str;
 
-	if (GPIO_Pin == B1_Pin) {
-		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	if (GPIO_Pin == B1_Pin) {//B1_Pin is GPIO_PIN_13, PC13 in ioc file, in his case swap state between 1 and 2
+		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);//Toggle LED 
 		if (state == 1){
-			state =2;
+			state = 2;
 			  }
 		else {
 			state = 1;
 		}
 	}
 
-	if (GPIO_Pin == GDO0_Pin){
+	if (GPIO_Pin == GDO0_Pin){//GDO0_Pin is GPIO_PIN_9, in ioc file it is PA9
 		//timer_val = __HAL_TIM_GET_COUNTER(&htim16);
-		while(HAL_GPIO_ReadPin(GDO0_GPIO_Port,GDO0_Pin)>0){
+		while(HAL_GPIO_ReadPin(GDO0_GPIO_Port,GDO0_Pin)>0){//Wait until GDO0 is low, then read data to SPI_BUFFER
 						i += 1;
 					}
 		readReg(RXBYTES, STATUS_REGISTER);
 		bytes_in_RXFIFO = SPI_BUFFER[0];
 
-		if (bytes_in_RXFIFO != 0){
+		if (bytes_in_RXFIFO != 0){//If we have bytes in the FIFO register
 
 
 			readReg(RXBYTES, STATUS_REGISTER);
-			bytes_in_RXFIFO = SPI_BUFFER[0];
+			bytes_in_RXFIFO = SPI_BUFFER[0];//amount of bytes in FIFO register
 
-			readRegBurst(RX_BUFFER, RX_FIF0, bytes_in_RXFIFO);
+			readRegBurst(RX_BUFFER, RX_FIF0, bytes_in_RXFIFO);//read the actual data to RX_BUFFER
 
 //			*pos = MSG;
 //			for (i = 0; i < bytes_in_RXFIFO; ++i)
@@ -681,7 +683,7 @@ void  HAL_GPIO_EXTI_Callback(u_int16_t GPIO_Pin){
 //			memset(MSG, 0, sizeof MSG);
 //			pos = MSG;
 
-			if (RX_BUFFER[bytes_in_RXFIFO-1] & 0x80){
+			if (RX_BUFFER[bytes_in_RXFIFO-1] & 0x80){//Bit flag to signal ok data, then increase recieved_packets 
 				recieved_packets += 1;
 //				sprintf(MSG, "CRC OK!\r\n");
 //				HAL_UART_Transmit(&huart2, MSG, sizeof(MSG), 100);
